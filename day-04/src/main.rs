@@ -34,18 +34,14 @@ impl Password {
         let mut iter = self.letters.iter().peekable();
         let mut counter = 1;
 
-        loop {
-            if let Some(digit) = iter.next() {
-                if iter.peek() == Some(&digit) {
-                    counter += 1
-                } else {
-                    if counter == 2 {
-                        return true;
-                    }
-                    counter = 1 // reset
-                }
+        while let Some(digit) = iter.next() {
+            if iter.peek() == Some(&digit) {
+                counter += 1
             } else {
-                break;
+                if counter == 2 {
+                    return true;
+                }
+                counter = 1 // reset
             }
         }
 
