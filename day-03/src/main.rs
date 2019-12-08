@@ -1,5 +1,3 @@
-use std::collections::hash_set::HashSet;
-
 #[derive(Debug)]
 enum Movement {
     Right(i32),
@@ -85,19 +83,19 @@ impl Path {
         }
     }
 
-    fn points(&self) -> HashSet<Point> {
-        let mut points = HashSet::new();
+    fn points(&self) -> Vec<Point> {
+        let mut points = vec![];
         let mut previous_movement: Point = Point { x: 0, y: 0 };
-        points.insert(previous_movement);
+        points.push(previous_movement);
 
         for movement in &self.movements {
             let next_movement: Point = previous_movement.move_by_amount(movement);
 
             for point in self.points_between(previous_movement, next_movement) {
-                points.insert(point);
+                points.push(point);
             }
 
-            points.insert(next_movement);
+            points.push(next_movement);
             previous_movement = next_movement;
         }
 
@@ -122,10 +120,15 @@ impl Path {
         let my_points = self.points();
         let other_points = other.points();
 
-        let intersections = my_points.intersection(&other_points);
-
-        intersections.map(|point| *point).collect()
+        intersections(&my_points, &other_points)
     }
+}
+
+fn intersections(a: &Vec<Point>, b: &Vec<Point>) -> Vec<Point> {
+    a.iter()
+        .filter(|point| b.contains(point))
+        .copied()
+        .collect()
 }
 
 fn distance(point: &Point) -> i32 {
@@ -145,9 +148,10 @@ fn main() {
         .intersections_with(path_b)
         .iter()
         .map(|point| distance(point))
+        .filter(|distance| distance != &0)
         .collect();
 
     distances.sort();
 
-    println!("distance: {:?}", distances.get(1).unwrap());
+    println!("distance: {:?}", distances.get(0).unwrap());
 }
