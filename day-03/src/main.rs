@@ -28,7 +28,50 @@ impl Movement {
     }
 }
 
-type Point = (i32, i32);
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+impl Point {
+    fn move_by_amount(&self, movement: &Movement) -> Self {
+        match movement {
+            Movement::Right(amount) => self.right(amount),
+            Movement::Left(amount) => self.left(*amount),
+            Movement::Up(amount) => self.up(*amount),
+            Movement::Down(amount) => self.down(*amount),
+        }
+    }
+
+    fn right(&self, amount: &i32) -> Self {
+        Self {
+            x: self.x + amount,
+            y: self.y,
+        }
+    }
+
+    fn left(&self, amount: i32) -> Self {
+        Self {
+            x: self.x - amount,
+            y: self.y,
+        }
+    }
+
+    fn up(&self, amount: i32) -> Self {
+        Self {
+            x: self.x,
+            y: self.y + amount,
+        }
+    }
+
+    fn down(&self, amount: i32) -> Self {
+        Self {
+            x: self.x,
+            y: self.y - amount,
+        }
+    }
+}
 
 #[derive(Debug)]
 struct Path {
@@ -44,16 +87,11 @@ impl Path {
 
     fn points(&self) -> HashSet<Point> {
         let mut points = HashSet::new();
-        let mut previous_movement: Point = (0, 0);
+        let mut previous_movement: Point = Point { x: 0, y: 0 };
         points.insert(previous_movement);
 
         for movement in &self.movements {
-            let next_movement = match movement {
-                Movement::Right(amount) => (previous_movement.0 + *amount, previous_movement.1),
-                Movement::Left(amount) => (previous_movement.0 - *amount, previous_movement.1),
-                Movement::Up(amount) => (previous_movement.0, previous_movement.1 + *amount),
-                Movement::Down(amount) => (previous_movement.0, previous_movement.1 - *amount),
-            };
+            let next_movement: Point = previous_movement.move_by_amount(movement);
 
             for point in self.points_between(previous_movement, next_movement) {
                 points.insert(point);
@@ -67,14 +105,14 @@ impl Path {
     }
 
     fn points_between(&self, a: Point, b: Point) -> Vec<Point> {
-        if b.0 > a.0 {
-            (a.0..b.0).map(|x| (x, b.1)).collect()
-        } else if b.0 < a.0 {
-            (b.0..a.0).map(|x| (x, b.1)).collect()
-        } else if b.1 > a.1 {
-            (a.1..b.1).map(|y| (b.0, y)).collect()
-        } else if b.1 < a.1 {
-            (b.1..a.1).map(|y| (b.0, y)).collect()
+        if b.x > a.x {
+            (a.x..b.x).map(|x| Point { x: x, y: b.y }).collect()
+        } else if b.x < a.x {
+            (b.x..a.x).map(|x| Point { x: x, y: b.y }).collect()
+        } else if b.y > a.y {
+            (a.y..b.y).map(|y| Point { x: b.x, y: y }).collect()
+        } else if b.y < a.y {
+            (b.y..a.y).map(|y| Point { x: b.x, y: y }).collect()
         } else {
             panic!("Huh?");
         }
@@ -91,7 +129,7 @@ impl Path {
 }
 
 fn distance(point: &Point) -> i32 {
-    point.0.abs() + point.1.abs()
+    point.x.abs() + point.y.abs()
 }
 
 fn main() {
