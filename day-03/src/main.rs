@@ -26,14 +26,14 @@ impl Movement {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 struct Point {
     x: i32,
     y: i32,
 }
 
 impl Point {
-    fn move_by_amount(&self, movement: &Movement) -> Self {
+    fn move_by_amount(&self, movement: &Movement) -> Vec<Self> {
         match movement {
             Movement::Right(amount) => self.right(amount),
             Movement::Left(amount) => self.left(*amount),
@@ -42,32 +42,40 @@ impl Point {
         }
     }
 
-    fn right(&self, amount: &i32) -> Self {
-        Self {
-            x: self.x + amount,
-            y: self.y,
-        }
+    fn right(&self, amount: &i32) -> Vec<Self> {
+        (1..=*amount)
+            .map(|n| Self {
+                x: self.x + n,
+                y: self.y,
+            })
+            .collect()
     }
 
-    fn left(&self, amount: i32) -> Self {
-        Self {
-            x: self.x - amount,
-            y: self.y,
-        }
+    fn left(&self, amount: i32) -> Vec<Self> {
+        (1..=amount)
+            .map(|n| Self {
+                x: self.x - n,
+                y: self.y,
+            })
+            .collect()
     }
 
-    fn up(&self, amount: i32) -> Self {
-        Self {
-            x: self.x,
-            y: self.y + amount,
-        }
+    fn up(&self, amount: i32) -> Vec<Self> {
+        (1..=amount)
+            .map(|n| Self {
+                x: self.x,
+                y: self.y + n,
+            })
+            .collect()
     }
 
-    fn down(&self, amount: i32) -> Self {
-        Self {
-            x: self.x,
-            y: self.y - amount,
-        }
+    fn down(&self, amount: i32) -> Vec<Self> {
+        (1..=amount)
+            .map(|n| Self {
+                x: self.x,
+                y: self.y - n,
+            })
+            .collect()
     }
 }
 
@@ -85,35 +93,17 @@ impl Path {
 
     fn points(&self) -> Vec<Point> {
         let mut points = vec![];
-        let mut previous_movement: Point = Point { x: 0, y: 0 };
-        points.push(previous_movement);
+        let mut previous_point: Point = Point { x: 0, y: 0 };
+        points.push(previous_point);
 
         for movement in &self.movements {
-            let next_movement: Point = previous_movement.move_by_amount(movement);
-
-            for point in self.points_between(previous_movement, next_movement) {
+            for point in previous_point.move_by_amount(movement) {
                 points.push(point);
+                previous_point = point;
             }
-
-            points.push(next_movement);
-            previous_movement = next_movement;
         }
 
         points
-    }
-
-    fn points_between(&self, a: Point, b: Point) -> Vec<Point> {
-        if b.x > a.x {
-            (a.x..b.x).map(|x| Point { x: x, y: b.y }).collect()
-        } else if b.x < a.x {
-            (b.x..a.x).map(|x| Point { x: x, y: b.y }).collect()
-        } else if b.y > a.y {
-            (a.y..b.y).map(|y| Point { x: b.x, y: y }).collect()
-        } else if b.y < a.y {
-            (b.y..a.y).map(|y| Point { x: b.x, y: y }).collect()
-        } else {
-            panic!("Huh?");
-        }
     }
 
     fn intersections_with(&self, other: &Path) -> Vec<Point> {
@@ -153,5 +143,5 @@ fn main() {
 
     distances.sort();
 
-    println!("distance: {:?}", distances.get(0).unwrap());
+    println!("distance: {:?}", distances.get(0));
 }
