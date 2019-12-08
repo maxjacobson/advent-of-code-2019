@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug)]
 enum Movement {
     Right(i32),
@@ -91,37 +93,25 @@ impl Path {
         }
     }
 
-    fn points(&self) -> Vec<Point> {
+    fn points(&self) -> Vec<(Point, i32)> {
         let mut points = vec![];
         let mut previous_point: Point = Point { x: 0, y: 0 };
-        points.push(previous_point);
+        points.push((previous_point, 0));
+        let mut steps = 0;
 
         for movement in &self.movements {
             for point in previous_point.move_by_amount(movement) {
-                points.push(point);
+                steps += 1;
+                points.push((point, steps));
                 previous_point = point;
             }
         }
 
         points
     }
-
-    fn intersections_with(&self, other: &Path) -> Vec<Point> {
-        let my_points = self.points();
-        let other_points = other.points();
-
-        intersections(&my_points, &other_points)
-    }
 }
 
-fn intersections(a: &Vec<Point>, b: &Vec<Point>) -> Vec<Point> {
-    a.iter()
-        .filter(|point| b.contains(point))
-        .copied()
-        .collect()
-}
-
-fn distance(point: &Point) -> i32 {
+fn manhattan_distance(point: &Point) -> i32 {
     point.x.abs() + point.y.abs()
 }
 
@@ -134,14 +124,43 @@ fn main() {
     let path_a = &paths[0];
     let path_b = &paths[1];
 
-    let mut distances: Vec<i32> = path_a
-        .intersections_with(path_b)
+    let mut points_carer: HashMap<Point, (Option<i32>, Option<i32>)> = HashMap::new();
+
+    for (point, steps) in path_a.points() {
+        let entry = points_carer.entry(point).or_insert((None, None));
+        match entry.0 {
+            None => entry.0 = Some(steps),
+            _ => {}
+        }
+    }
+
+    for (point, steps) in path_b.points() {
+        let entry = points_carer.entry(point).or_insert((None, None));
+        match entry.1 {
+            None => entry.1 = Some(steps),
+            _ => {}
+        }
+    }
+
+    let mut manhattan_distances: Vec<i32> = points_carer
         .iter()
-        .map(|point| distance(point))
+        .filter(|(_point, steps)| steps.0.is_some() && steps.1.is_some())
+        .map(|(point, _steps)| manhattan_distance(point))
         .filter(|distance| distance != &0)
         .collect();
 
-    distances.sort();
+    manhattan_distances.sort();
 
-    println!("distance: {:?}", distances.get(0));
+    println!("Star 1: {:?}", manhattan_distances.get(0));
+
+    let mut step_distances: Vec<i32> = points_carer
+        .iter()
+        .filter(|(_point, steps)| steps.0.is_some() && steps.1.is_some())
+        .map(|(_point, steps)| steps.0.unwrap() + steps.1.unwrap())
+        .filter(|distance| distance != &0)
+        .collect();
+
+    step_distances.sort();
+
+    println!("Star 2: {:?}", step_distances.get(0));
 }
