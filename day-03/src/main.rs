@@ -38,7 +38,7 @@ struct Path {
 impl Path {
     fn from_line(line: &str) -> Self {
         Self {
-            movements: line.split(",").map(|s| Movement::from_str(&s)).collect(),
+            movements: line.split(',').map(|s| Movement::from_str(&s)).collect(),
         }
     }
 
@@ -49,10 +49,10 @@ impl Path {
 
         for movement in &self.movements {
             let next_movement = match movement {
-                Movement::Right(amount) => (previous_movement.0 + amount, previous_movement.1),
-                Movement::Left(amount) => (previous_movement.0 - amount, previous_movement.1),
-                Movement::Up(amount) => (previous_movement.0, previous_movement.1 + amount),
-                Movement::Down(amount) => (previous_movement.0, previous_movement.1 - amount),
+                Movement::Right(amount) => (previous_movement.0 + *amount, previous_movement.1),
+                Movement::Left(amount) => (previous_movement.0 - *amount, previous_movement.1),
+                Movement::Up(amount) => (previous_movement.0, previous_movement.1 + *amount),
+                Movement::Down(amount) => (previous_movement.0, previous_movement.1 - *amount),
             };
 
             for point in self.points_between(previous_movement, next_movement) {
@@ -108,7 +108,8 @@ fn main() {
         .iter()
         .map(|point| distance(point))
         .collect();
+
     distances.sort();
 
-    println!("distance: {:?}", distances.iter().nth(1).unwrap());
+    println!("distance: {:?}", distances.get(1).unwrap());
 }
